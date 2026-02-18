@@ -1,0 +1,827 @@
+{
+  "name": "Clasificador Inteligente con LLM",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-ia-practica",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -528,
+        88
+      ],
+      "id": "d7ed7021-9cbe-4745-8ded-eb0a22da9b5d",
+      "name": "Webhook",
+      "webhookId": "fa01a83f-6105-4cfe-b70e-9d9b5b13b490"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "35f316a7-e325-4d37-905e-1c4d64d7e77f",
+              "name": "nombre",
+              "value": "={{$json.body.nombre}}",
+              "type": "string"
+            },
+            {
+              "id": "43210bf0-4fdd-4258-a7c8-19d5a2fe0e95",
+              "name": "email",
+              "value": "={{ $json.body.email }}",
+              "type": "string"
+            },
+            {
+              "id": "c691212c-1c2c-4cbf-bdac-1541d86e84c3",
+              "name": "mensaje",
+              "value": "={{ $json.body.mensaje }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -304,
+        88
+      ],
+      "id": "fa9a9acf-c97e-484d-b674-e79d6e58f2c5",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Actúa como un analista profesional de atención al cliente.\nDebes responder únicamente en el formato indicado.\nNo agregues explicaciones.\n\nAnaliza el siguiente mensaje y cumple estrictamente estas reglas:\n\n1. Clasificar el tono: (Enojado, Neutral, Entusiasmado).\n2. Identificar la intención: (Compra, Consulta, Reclamo, Otro).\n3. Determinar la prioridad:\n   - Alta → si hay enojo fuerte, urgencia o amenaza de cancelar.\n   - Media → si hay duda concreta con intención clara.\n   - Baja → si es consulta general sin urgencia.\n4. Extraer la duda principal en máximo 5 palabras.\n\nFormato obligatorio:\nTono: [tono] | Intencion: [intencion] | Prioridad: [prioridad] | Duda: [duda]\n\nMensaje:\n{{$json.mensaje}}\n",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Actúa como un analista profesional de atención al cliente. Debes responder únicamente en el formato indicado. No agregues explicaciones.  Analiza el siguiente mensaje y cumple estrictamente estas reglas:  1. Clasificar el tono: (Enojado, Neutral, Entusiasmado). 2. Identificar la intención: (Compra, Consulta, Reclamo, Otro). 3. Determinar la prioridad:    - Alta → si hay enojo fuerte, urgencia o amenaza de cancelar.    - Media → si hay duda concreta con intención clara.    - Baja → si es consulta general sin urgencia. 4. Extraer la duda principal en máximo 5 palabras.  Formato obligatorio: Tono: [tono] | Intencion: [intencion] | Prioridad: [prioridad] | Duda: [duda]  Mensaje: {{$json.mensaje}}"
+            },
+            {
+              "type": "HumanMessagePromptTemplate",
+              "message": "=Analiza el siguiente mensaje y cumple estrictamente estas reglas:  1. Clasificar el tono: (Enojado, Neutral, Entusiasmado). 2. Identificar la intención: (Compra, Consulta, Reclamo, Otro). 3. Determinar la prioridad:    - Alta → si hay enojo fuerte, urgencia o amenaza de cancelar.    - Media → si hay duda concreta con intención clara.    - Baja → si es consulta general sin urgencia. 4. Extraer la duda principal en máximo 5 palabras.  Formato obligatorio: Tono: [tono] | Intencion: [intencion] | Prioridad: [prioridad] | Duda: [duda]  Mensaje: {{$json.mensaje}}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -80,
+        88
+      ],
+      "id": "e5614e0e-45ea-4ec8-9166-f146b3c409ae",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {
+          "maxTokensToSample": 150,
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -8,
+        312
+      ],
+      "id": "352a7bd5-7516-4eca-9c67-c964a8ddd482",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "Uu3MHUzNWNIUAGPx",
+          "name": "Groq account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a0a232db-95d5-4476-82c0-176521608720",
+              "name": "tono",
+              "value": "={{$json.text.split('|')[0].split(':')[1].trim()}}",
+              "type": "string"
+            },
+            {
+              "id": "3db81466-33b4-43c4-a147-964cf8a4a180",
+              "name": "intencion",
+              "value": "={{$json.text.split('|')[1].split(':')[1].trim()}}",
+              "type": "string"
+            },
+            {
+              "id": "d03b844e-93c5-44a7-bd77-cfe8f279e618",
+              "name": "prioridad",
+              "value": "={{$json.text.split('|')[2].split(':')[1].trim()}}",
+              "type": "string"
+            },
+            {
+              "id": "fc59fe92-4925-446d-b2a6-c3242e57735d",
+              "name": "duda",
+              "value": "={{$json.text.split('|')[3].split(':')[1].trim()}}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        272,
+        88
+      ],
+      "id": "e83ac38e-834d-4f66-965c-5a5730ab83e8",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.prioridad}}",
+                    "rightValue": "Alta",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "ab30f82f-d055-48f0-85d7-0ad6086c1594"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ece0c54f-9793-4228-ad10-1f2dd5cf1f33",
+                    "leftValue": "={{$json.prioridad}}",
+                    "rightValue": "Media",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "838e6333-3685-4cf0-8b3f-933e2085e820",
+                    "leftValue": "={{$json.prioridad}}",
+                    "rightValue": "Baja",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        496,
+        72
+      ],
+      "id": "ca3e5c3d-b95d-45da-aa27-ac737bda43c6",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "sendTo": "eliaselado1715@gmail.com",
+        "subject": "=🚨 Lead Prioridad Alta - {{ $('Edit Fields').item.json.nombre }}",
+        "message": "=Nuevo mensaje urgente recibido:\n\nNombre: {{ $('Edit Fields').item.json.nombre }}\nEmail: {{ $('Edit Fields').item.json.email }}\nTono: {{$json.tono}}\nIntención: {{$json.intencion}}\nPrioridad: {{$json.prioridad}}\nDuda: {{$json.duda}}\n\nMensaje original:\n{{$node[\"Edit Fields\"].json[\"mensaje\"]}}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1104,
+        -208
+      ],
+      "id": "3eb91adc-f43b-4331-b1f9-3cddc6145397",
+      "name": "Send a message",
+      "webhookId": "1bf77719-0b01-4be3-bc0b-ff9b2ae62b8e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "0d8ZRskLNVABlTPL",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Actúa como un agente profesional de atención al cliente.\n\nDebes redactar una respuesta clara, cordial y resolutiva.\n\nTono detectado: {{$json.tono}}\nIntención detectada: {{$json.intencion}}\nDuda principal: {{$json.duda}}\n\nInstrucciones:\n- Máximo 120 palabras.\n- Mantener tono profesional.\n- No repetir literalmente la duda.\n- Ofrecer ayuda concreta.\n",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Actúa como un agente profesional de atención al cliente.  Debes redactar una respuesta clara, cordial y resolutiva.  Tono detectado: {{$json.tono}} Intención detectada: {{$json.intencion}} Duda principal: {{$json.duda}}  Instrucciones: - Máximo 120 palabras. - Mantener tono profesional. - No repetir literalmente la duda. - Ofrecer ayuda concreta."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        768,
+        80
+      ],
+      "id": "20d020f0-85ad-4dfa-83dd-a47709ec7127",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {
+          "maxTokensToSample": 200,
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        792,
+        208
+      ],
+      "id": "bf655358-be3b-40d5-82c1-45f880398b2e",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "Uu3MHUzNWNIUAGPx",
+          "name": "Groq account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": " eliaselado1715@gmail.com",
+        "subject": "Respuesta a tu consulta",
+        "message": "=Hola{{ $('Edit Fields').item.json.nombre }}  {{$json.text}}  Quedamos atentos a cualquier otra consulta.  Saludos, Equipo de Soporte",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        96
+      ],
+      "id": "af5196ea-2968-4baf-9d20-8a1b26d53f59",
+      "name": "Send a message1",
+      "webhookId": "df651d44-86b2-4915-84fb-549ed396f711",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "cF5igSVzcwnnLzEI",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        912,
+        384
+      ],
+      "id": "d5cbe8f9-52d8-4690-acbf-6c132f00e643",
+      "name": "Wait",
+      "webhookId": "79e6d290-ac8d-4f2b-a6d4-c30679600b81"
+    },
+    {
+      "parameters": {
+        "sendTo": " eliaselado1715@gmail.com",
+        "subject": "Seguimos atentos a tu consulta",
+        "message": "=Hola {{$json.nombre}},  Queríamos confirmar si pudiste resolver tu consulta sobre: {{$json.duda}}.  Si necesitás más ayuda, estamos disponibles para asistirte.  Saludos, Equipo de Soporte",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        384
+      ],
+      "id": "b321393b-2c72-4960-8a00-402f3a305de7",
+      "name": "Send a message2",
+      "webhookId": "e590c0b9-32a6-405a-801a-a45c20bc9a1f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "cF5igSVzcwnnLzEI",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1u9ZErNXdCdROXc21ckjggEl1IsxFU-Jjgnmvh1V7S6M/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Alta",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1u9ZErNXdCdROXc21ckjggEl1IsxFU-Jjgnmvh1V7S6M/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "nombre": "={{ $('Edit Fields').item.json.nombre }}",
+            "mail": "={{ $('Edit Fields').item.json.email }}",
+            "mensaje": "={{ $('Edit Fields').item.json.mensaje }}",
+            "prioridad": "={{ $('Edit Fields1').item.json.prioridad }}",
+            "tono": "={{ $('Edit Fields1').item.json.tono }}",
+            "duda": "={{ $('Edit Fields1').item.json.duda }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mail",
+              "displayName": "mail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mensaje",
+              "displayName": "mensaje",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "prioridad",
+              "displayName": "prioridad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tono",
+              "displayName": "tono",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "duda",
+              "displayName": "duda",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1312,
+        -208
+      ],
+      "id": "3eea834d-6e84-4347-9c18-e71175160017",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "xaLyW1zBlgsGVJmf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1u9ZErNXdCdROXc21ckjggEl1IsxFU-Jjgnmvh1V7S6M/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2030502704,
+          "mode": "list",
+          "cachedResultName": "Media",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1u9ZErNXdCdROXc21ckjggEl1IsxFU-Jjgnmvh1V7S6M/edit#gid=2030502704"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "nombre": "={{ $('Edit Fields').item.json.nombre }}",
+            "mail": "={{ $('Edit Fields').item.json.email }}",
+            "mensaje": "={{ $('Edit Fields').item.json.mensaje }}",
+            "prioridad": "={{ $('Edit Fields1').item.json.prioridad }}",
+            "tono": "={{ $('Edit Fields1').item.json.tono }}",
+            "duda": "={{ $('Edit Fields1').item.json.duda }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mail",
+              "displayName": "mail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mensaje",
+              "displayName": "mensaje",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "prioridad",
+              "displayName": "prioridad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tono",
+              "displayName": "tono",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "duda",
+              "displayName": "duda",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1328,
+        96
+      ],
+      "id": "bdd88104-4dd8-4c5d-abe1-77ec150c4830",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "xaLyW1zBlgsGVJmf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1u9ZErNXdCdROXc21ckjggEl1IsxFU-Jjgnmvh1V7S6M/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 51499863,
+          "mode": "list",
+          "cachedResultName": "Baja",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1u9ZErNXdCdROXc21ckjggEl1IsxFU-Jjgnmvh1V7S6M/edit#gid=51499863"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "prioridad": "={{ $('Switch').item.json.prioridad }}",
+            "duda": "={{ $('Switch').item.json.duda }}",
+            "tono": "={{ $('Switch').item.json.tono }}",
+            "nombre": "={{ $('Edit Fields').item.json.nombre }}",
+            "mail": "={{ $('Edit Fields').item.json.email }}",
+            "mensaje": "={{ $('Edit Fields').item.json.mensaje }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mail",
+              "displayName": "mail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mensaje",
+              "displayName": "mensaje",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "prioridad",
+              "displayName": "prioridad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tono",
+              "displayName": "tono",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "duda",
+              "displayName": "duda",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1328,
+        384
+      ],
+      "id": "968415b7-ed2c-4220-b4ba-7aa478fb2ef3",
+      "name": "Append row in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "xaLyW1zBlgsGVJmf",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message2": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "b095a8da-b7cc-4ae4-857d-873a59195cde",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ef28c923572540ea384bee46db1b5cf61d9482ffc03a5744397074080c160aa4"
+  },
+  "id": "f3HYSU3o_mKwTsYtEAGcT",
+  "tags": []
+}
